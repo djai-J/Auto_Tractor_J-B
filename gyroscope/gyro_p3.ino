@@ -1,12 +1,24 @@
+#include <ezButton.h>
 #include "MPU9250.h"
+
+
+#define LOOP_STATE_STOPPED 0
+#define LOOP_STATE_STARTED 1
 
 // an MPU9250 object with the MPU-9250 sensor on I2C bus 0 with address 0x68
 MPU9250 IMU(Wire,0x68);
 int status;
+int count = 0; 
+
+
+ezButton button(4);  // create ezButton object that attach to pin 4;
+int loopState = LOOP_STATE_STOPPED;
+
 
 void setup() {
   // serial to display data
-  Serial.begin(4800);
+  Serial.begin(38400);
+  button.setDebounceTime(50); // set debounce time to 50 milliseconds
   while(!Serial) {}
 
   // start communication with IMU 
@@ -22,6 +34,16 @@ void setup() {
 
 void loop() {
   // read the sensor
+  button.loop(); // MUST call the loop() function first
+
+  if (button.isPressed()) {
+    if (loopState == LOOP_STATE_STOPPED)
+      loopState = LOOP_STATE_STARTED;
+    else // if(loopState == LOOP_STATE_STARTED)
+      loopState = LOOP_STATE_STOPPED;
+  }
+
+if (loopState == LOOP_STATE_STARTED){
   IMU.readSensor();
   // display the data
   Serial.print("AccelX: ");
@@ -54,5 +76,9 @@ void loop() {
   Serial.print("Temperature in C: ");
   Serial.println(IMU.getTemperature_C(),6);
   Serial.println();
-  delay(200);
+  delay(2000);
+
+}
+
+
 } 
