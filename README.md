@@ -13,3 +13,7 @@ Bluetooth module: https://circuitdigest.com/microcontroller-projects/how-to-use-
 
 Ultrasonic sensor: https://lastminuteengineers.com/arduino-sr04-ultrasonic-sensor-tutorial/ 
 https://create.arduino.cc/projecthub/abdularbi17/ultrasonic-sensor-hc-sr04-with-arduino-tutorial-327ff6 
+
+
+Gyroscope library: https://github.com/bolderflight/invensense-imu
+
