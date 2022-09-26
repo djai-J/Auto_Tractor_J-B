@@ -1,0 +1,51 @@
+#include <MPU6050_light.h>
+#include <Wire.h>
+
+MPU6050 mpu(Wire);
+
+unsigned long time = 0; //timer for printing data
+
+void setup() {
+  Serial.begin(9600); //baud rate of 9600 to collect data every sec. 
+  Wire.begin();
+  
+  //checks if MPU9250 is connected
+  byte status = mpu.begin();
+  Serial.print(F("MPU9250 status: "));
+  Serial.println(status);
+  while(status!=0){ } // stops the program if connection is not made
+  
+  //Calculate offsets for gyroscope calibration
+  Serial.println(F("Calculating offsets, please do not move the gyroscope..."));
+  delay(1000);
+  mpu.calcOffsets(true,true); // gyro and accelerometer
+  Serial.println("Finished.");
+
+}
+
+void loop(){
+	mpu.update();
+
+	if(millis() - time > 1000){ // print data every second
+
+		mpu.getAccX();
+		mpu.getAccY();
+		mpu.getAccZ();
+
+		mpu.getGyroX();
+		mpu.getGyroY();
+		mpu.getGyroZ();
+
+		mpu.getAccAngleX();
+		mpu.getAccAngleY();
+
+		mpu.getAngleX();
+		mpu.getAngleY();
+		mpu.getAngleZ();
+		
+		time = millis();
+	}
+	
+}
+
+
