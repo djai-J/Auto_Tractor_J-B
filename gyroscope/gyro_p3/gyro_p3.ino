@@ -73,10 +73,8 @@ if (loopState == LOOP_STATE_STARTED){
   Serial.print("MagZ: ");  
   Serial.println(IMU.getMagZ_uT(),6);
   
-  Serial.print("Temperature in C: ");
-  Serial.println(IMU.getTemperature_C(),6);
-  Serial.println();
-  delay(2000);
+
+
 
 }
 

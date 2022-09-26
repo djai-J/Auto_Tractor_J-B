@@ -1,8 +1,8 @@
 int motor1pin1 = 2;
-int motor1pin2 = 3;
+int motor1pin2 = 7;
 
-int motor2pin1 = 4;
-int motor2pin2 = 5;
+int motor2pin1 = 12;
+int motor2pin2 = 13;
 
 void setup() {
   // put your setup code here, to run once:
@@ -11,16 +11,16 @@ void setup() {
   pinMode(motor2pin1, OUTPUT);
   pinMode(motor2pin2, OUTPUT);
 
-  pinMode(9, OUTPUT); 
-  pinMode(10, OUTPUT);
+  pinMode(6, OUTPUT); 
+  pinMode(5, OUTPUT);
 }
 
 void loop() {
   // put your main code here, to run repeatedly:   
 
   //Controlling speed (0 = off and 255 = max speed):
-  analogWrite(9, 100); //ENA pin
-  analogWrite(10, 200); //ENB pin
+  analogWrite(6, 100); //ENA pin
+  analogWrite(5, 200); //ENB pin
 
   //Controlling spin direction of motors:
   digitalWrite(motor1pin1, HIGH);
