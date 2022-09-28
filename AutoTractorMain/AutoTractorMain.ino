@@ -109,10 +109,6 @@ void loop() {
   prevTime = currTime;
 }
 
-int getYawAngle(int dt){
-
-}
-
 void driveStraight(float currYaw, float prevYaw, int dt) {
 
   float errorIntegral;
