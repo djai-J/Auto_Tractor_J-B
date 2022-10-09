@@ -1,4 +1,6 @@
-SoftwareSerial HM10(2, 3);
+#include <SoftwareSerial.h>
+
+SoftwareSerial HM10(0, 1);
 char appData;  
 String inData = "";
 
@@ -6,16 +8,20 @@ void setup(){
   Serial.begin(9600);
   Serial.println("HM10 serial started at 9600");
   HM10.begin(9600); 
-  pinMode(13, OUTPUT); // setting output
-  digitalWrite(13, LOW); // writing to output
+
+  pinMode(0, INPUT);
+  pinMode(1, OUTPUT);
+  //pinMode(13, OUTPUT); // setting output
+  //digitalWrite(13, LOW); // writing to output
 }
 
 void loop(){
   HM10.listen();  // listen the HM10 port
-  while (HM10.available() > 0) {   // if HM10 sends something then read
+  if (HM10.available() > 0) {   // if HM10 sends something then read
     appData = HM10.read();
     inData = String(appData);  // save the data in string format
     Serial.write(appData);
+    //Serial.println(appData);
   }
 
   if ( inData == "O") {
