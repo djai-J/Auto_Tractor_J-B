@@ -23,6 +23,10 @@ void loop(){
     Serial.write(appData);
     //Serial.println(appData);
   }
+  if (Serial.available()) {           // Read user input if available.
+    delay(10);
+    HM10.write(Serial.read());
+  }
 
   if ( inData == "O") {
     Serial.println("Tractor stopped");
