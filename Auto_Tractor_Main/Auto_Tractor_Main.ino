@@ -41,7 +41,7 @@ int dt;
 int currTime;
 int prevTime;
 
-int rightSpeed = 240;
+int rightSpeed = 217;
 int leftSpeed = 240;
 
 float error = 0;
@@ -134,7 +134,7 @@ void loop() {
 
     obstacle = ultrasonic();
     currLight = analogRead(IR);
-    Serial.println(currLight);
+    //Serial.println(currLight);
 
     if(obstacle == 1){
       brake();
@@ -147,12 +147,13 @@ void loop() {
         timer++;
       }else{
         // may turn early do to unsigned int, typecast later if needed
-        if(currLight < (prevLight - 65) && turnCount < 2 && wait > 25){
+        if(currLight < (prevLight - 170) && turnCount < 2 && wait > 30){
           desiredAngle = desiredAngle + 90;
           turnCount += 1;
           masterCount += 1;
           wait = 0;
-        } else if(currLight < (prevLight - 65) && turnCount < 4 && wait > 25){
+          Serial.println(wait);
+        } else if(currLight < (prevLight - 170) && turnCount < 4 && wait > 30){
           desiredAngle = desiredAngle - 90;
           turnCount += 1;
           masterCount += 1;
@@ -181,6 +182,9 @@ void loop() {
 
 void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
 
+  int kp;
+  static int turning = 0;
+
   // Directions of left motor compared to inputs IN1 and IN2
   // IN1'IN2' = off
   // IN1'IN2 = Reverse
@@ -197,48 +201,69 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
 
   error = desiredYaw - currYaw;
 
-  if(abs(error) < 20){
+  if(abs(error) <= 15 && turning == 0){
     // Drive both wheels forward
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
-  }else if((error) > 15){
+
+    // Drive straight P term 
+    kp = 1.2;
+  }else if((error) > 15 || turning > 0 && error > 10){
     // Turn immediately to the left
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
-  }else if((error) < -20){
+
+    if(turning == 0){
+      turning = 3;
+    } else{
+      turning += -1;
+    }
+
+    // turn left P term 
+    kp = 0.6;
+  }else if((error) < -15 || turning > 0 && error < 10){
     // Turn immediately to the right
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
+
+
+    if(turning == 0){
+      turning = 3;
+    } else{
+      turning += -1;
+    }
+    
+
+    // turn right P term 
+    kp = 0.6;
   }
 
   if(currYaw == 0){
-    rightSpeed = 230;
-    leftSpeed = 230;
+    rightSpeed = 217;
+    leftSpeed = 240;
   }
 
-  // P term 
-  int kp = 1;
 
   // calculate the desired speed of the right motor
   rightSpeed = rightSpeed - kp * (error);
-  if(rightSpeed > 255){
-    rightSpeed = 255;
-  }else if (rightSpeed < 205){
-    rightSpeed = 205;
+  if(rightSpeed > 232){
+    rightSpeed = 232;
+  }else if (rightSpeed < 202){
+    rightSpeed = 202;
   }
 
   // calculate the desired speed of the left motor
   leftSpeed = leftSpeed + kp * (error);
   if(leftSpeed > 255){
     leftSpeed = 255;
-  }else if (leftSpeed < 205){
-    leftSpeed = 205;
+  }else if (leftSpeed < 225){
+    leftSpeed = 225;
   }
   /*
   int ki = 1;
@@ -247,10 +272,9 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
   rightSpeed = rightSpeed - integral;
   leftSpeed = leftSpeed + integral;
 */
-
   // set motor speed
-  analogWrite(ENA, rightSpeed);
-  analogWrite(ENB, leftSpeed);
+  analogWrite(ENB, rightSpeed);
+  analogWrite(ENA, leftSpeed);
 }
 
 void brake() {
@@ -298,14 +322,14 @@ int ultrasonic(){
   static int i = 0;
 
   i++;
-
+/*
   if(i>500){
     Serial.print("The distance in centimeters is ");
     Serial.print(distance);
     Serial.print("\n");
     i = 0;
   }
-  
+  */
   if(distance < 10){
     obstacle = 1;
   }else{
