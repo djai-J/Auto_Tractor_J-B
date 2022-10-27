@@ -41,7 +41,7 @@ int dt;
 int currTime;
 int prevTime;
 
-int rightSpeed = 217;
+int rightSpeed = 213;
 int leftSpeed = 240;
 
 float error = 0;
@@ -147,13 +147,13 @@ void loop() {
         timer++;
       }else{
         // may turn early do to unsigned int, typecast later if needed
-        if(currLight < (prevLight - 170) && turnCount < 2 && wait > 30){
+        if(currLight < (prevLight - 150) && turnCount < 2 && wait > 30){
           desiredAngle = desiredAngle + 90;
           turnCount += 1;
           masterCount += 1;
           wait = 0;
           Serial.println(wait);
-        } else if(currLight < (prevLight - 170) && turnCount < 4 && wait > 30){
+        } else if(currLight < (prevLight - 150) && turnCount < 4 && wait > 30){
           desiredAngle = desiredAngle - 90;
           turnCount += 1;
           masterCount += 1;
@@ -201,31 +201,24 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
 
   error = desiredYaw - currYaw;
 
-  if(abs(error) <= 15 && turning == 0){
-    // Drive both wheels forward
-    digitalWrite(IN1, HIGH);
-    digitalWrite(IN2, LOW);
-    digitalWrite(IN3, LOW);
-    digitalWrite(IN4, HIGH);
+  if((error) > 15 || turning > 0 && error > 9){
+    turning = 100;
 
-    // Drive straight P term 
-    kp = 1.2;
-  }else if((error) > 15 || turning > 0 && error > 10){
     // Turn immediately to the left
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
 
-    if(turning == 0){
-      turning = 3;
-    } else{
+    if(turning > 0){
       turning += -1;
     }
 
     // turn left P term 
-    kp = 0.6;
-  }else if((error) < -15 || turning > 0 && error < 10){
+    kp = 0.4;
+  }else if((error) < -15 || turning > 0 && error < -11){
+    turning = 100; 
+
     // Turn immediately to the right
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
@@ -233,29 +226,38 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
     digitalWrite(IN4, LOW);
 
 
-    if(turning == 0){
-      turning = 3;
-    } else{
+    if(turning > 0){
       turning += -1;
     }
     
 
     // turn right P term 
-    kp = 0.6;
+    kp = 0.4;
+  } else if(abs(error) <= 15){
+    turning = 0;
+
+    // Drive both wheels forward
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, LOW);
+    digitalWrite(IN4, HIGH);
+
+    // Drive straight P term 
+    kp = 1.7;
   }
 
   if(currYaw == 0){
-    rightSpeed = 217;
+    rightSpeed = 213;
     leftSpeed = 240;
   }
 
 
   // calculate the desired speed of the right motor
   rightSpeed = rightSpeed - kp * (error);
-  if(rightSpeed > 232){
-    rightSpeed = 232;
-  }else if (rightSpeed < 202){
-    rightSpeed = 202;
+  if(rightSpeed > 228){
+    rightSpeed = 228;
+  }else if (rightSpeed < 198){
+    rightSpeed = 195;
   }
 
   // calculate the desired speed of the left motor
@@ -277,11 +279,13 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
   analogWrite(ENA, leftSpeed);
 }
 
+// stops the tractor
 void brake() {
   analogWrite(ENA, 0);
   analogWrite(ENB, 0);
 }
 
+// detects if the button has been pressed and 
 int run() {
   static int start = 0;
 
