@@ -41,7 +41,7 @@ int dt;
 int currTime;
 int prevTime;
 
-int rightSpeed = 213;
+int rightSpeed = 212;
 int leftSpeed = 240;
 
 float error = 0;
@@ -245,19 +245,19 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
     // Drive straight P term 
     kp = 1.7;
   }
-
+/*
   if(currYaw == 0){
     rightSpeed = 213;
     leftSpeed = 240;
   }
-
+*/
 
   // calculate the desired speed of the right motor
   rightSpeed = rightSpeed - kp * (error);
-  if(rightSpeed > 228){
-    rightSpeed = 228;
-  }else if (rightSpeed < 198){
-    rightSpeed = 195;
+  if(rightSpeed > 227){
+    rightSpeed = 227;
+  }else if (rightSpeed < 197){
+    rightSpeed = 197;
   }
 
   // calculate the desired speed of the left motor
