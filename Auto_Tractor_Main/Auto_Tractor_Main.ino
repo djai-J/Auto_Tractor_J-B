@@ -41,8 +41,8 @@ int dt;
 int currTime;
 int prevTime;
 
-int rightSpeed = 212;
-int leftSpeed = 240;
+int rightSpeed = 185;
+int leftSpeed = 185;
 
 float error = 0;
 int integral = 0;
@@ -143,17 +143,17 @@ void loop() {
       
       angle = mpu.getAngleZ();
       
-      if(timer<5){
+      if(timer<0){
         timer++;
       }else{
         // may turn early do to unsigned int, typecast later if needed
-        if(currLight < (prevLight - 150) && turnCount < 2 && wait > 30){
+        if(currLight < (prevLight - 150) && turnCount < 2 && wait > 150){
           desiredAngle = desiredAngle + 90;
           turnCount += 1;
           masterCount += 1;
           wait = 0;
           Serial.println(wait);
-        } else if(currLight < (prevLight - 150) && turnCount < 4 && wait > 30){
+        } else if(currLight < (prevLight - 150) && turnCount < 4 && wait > 150){
           desiredAngle = desiredAngle - 90;
           turnCount += 1;
           masterCount += 1;
@@ -243,29 +243,29 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
     digitalWrite(IN4, HIGH);
 
     // Drive straight P term 
-    kp = 1.7;
+    kp = 9.9;
   }
-/*
+
   if(currYaw == 0){
-    rightSpeed = 213;
-    leftSpeed = 240;
+    rightSpeed = 185;
+    leftSpeed = 185;
   }
-*/
+
 
   // calculate the desired speed of the right motor
   rightSpeed = rightSpeed - kp * (error);
-  if(rightSpeed > 227){
-    rightSpeed = 227;
-  }else if (rightSpeed < 197){
-    rightSpeed = 197;
+  if(rightSpeed > 255){
+    rightSpeed = 255;
+  }else if (rightSpeed < 115){
+    rightSpeed = 115;
   }
 
   // calculate the desired speed of the left motor
   leftSpeed = leftSpeed + kp * (error);
   if(leftSpeed > 255){
     leftSpeed = 255;
-  }else if (leftSpeed < 225){
-    leftSpeed = 225;
+  }else if (leftSpeed < 115){
+    leftSpeed = 115;
   }
   /*
   int ki = 1;
@@ -275,8 +275,8 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
   leftSpeed = leftSpeed + integral;
 */
   // set motor speed
-  analogWrite(ENB, rightSpeed);
-  analogWrite(ENA, leftSpeed);
+  analogWrite(ENA, rightSpeed);
+  analogWrite(ENB, leftSpeed);
 }
 
 // stops the tractor
