@@ -25,6 +25,7 @@ int start = 0;
 
 int Trig = 9;
 int Echo = 10;
+int Buzz = 4;
 
 long rawPulse;
 int distance;
@@ -94,6 +95,7 @@ void setup() {
   //initialize the trigger and echo pins
   pinMode(Trig, OUTPUT);
   pinMode(Echo, INPUT);
+  pinMode(Buzz, OUTPUT);
 
   Wire.begin();
   
@@ -138,8 +140,10 @@ void loop() {
 
     if(obstacle == 1){
       brake();
+      digitalWrite(Buzz, HIGH);
+      digitalWrite(Buzz, LOW);
     }else{
-
+      digitalWrite(Buzz, LOW);
       
       angle = mpu.getAngleZ();
       
@@ -147,13 +151,13 @@ void loop() {
         timer++;
       }else{
         // may turn early do to unsigned int, typecast later if needed
-        if(currLight < (prevLight - 150) && turnCount < 2 && wait > 150){
+        if(currLight < (prevLight - 55) && turnCount < 2 && wait > 200){
           desiredAngle = desiredAngle + 90;
           turnCount += 1;
           masterCount += 1;
           wait = 0;
           Serial.println(wait);
-        } else if(currLight < (prevLight - 150) && turnCount < 4 && wait > 150){
+        } else if(currLight < (prevLight - 55) && turnCount < 4 && wait > 200){
           desiredAngle = desiredAngle - 90;
           turnCount += 1;
           masterCount += 1;
@@ -169,11 +173,12 @@ void loop() {
         drivePID(angle, prevAngle, desiredAngle, dt);
         prevAngle = angle;
 
-        prevLight = currLight;
+        
       }
       
     }
 
+    prevLight = currLight;
   }
   
   prevTime = currTime;
@@ -352,7 +357,6 @@ int bluetooth(){
     Serial.println("reading...");
     HM10.write("reading...");
   }
-  
 
   while (HM10.available() > 0){
     //Serial.println("TEST");
