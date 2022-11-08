@@ -1,0 +1,34 @@
+import asyncio
+from bleak import BleakClient
+
+import asyncio
+from bleak import BleakClient
+
+address = "34:08:E1:1A:03:62"
+MODEL_NBR_UUID = "00002A03-0000-1000-8000-00805f9b34fb"
+
+async def main(address):
+    client = BleakClient(address)
+    try:
+        await client.connect()
+        model_number = await client.read_gatt_char(MODEL_NBR_UUID)
+        print("Model Number: {0}".format("".join(map(chr, model_number))))
+    except Exception as e:
+        print(e)
+    finally:
+        await client.disconnect()
+
+asyncio.run(main(address))
+
+async def main(address):
+    client = BleakClient(address)
+    try:
+        await client.connect()
+        model_number = await client.read_gatt_char(MODEL_NBR_UUID)
+        print("Model Number: {0}".format("".join(map(chr, model_number))))
+    except Exception as e:
+        print(e)
+    finally:
+        await client.disconnect()
+
+asyncio.run(main(address))
