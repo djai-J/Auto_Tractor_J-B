@@ -135,7 +135,6 @@ void loop() {
   } else if (start == 1){
 
     obstacle = ultrasonic();
-    currLight = analogRead(IR);
     //Serial.println(currLight);
 
     if(obstacle == 1){
@@ -146,6 +145,7 @@ void loop() {
       digitalWrite(Buzz, LOW);
       
       angle = mpu.getAngleZ();
+      currLight = analogRead(IR);
       
       if(timer<0){
         timer++;
@@ -173,12 +173,12 @@ void loop() {
         drivePID(angle, prevAngle, desiredAngle, dt);
         prevAngle = angle;
 
-        
+        prevLight = currLight;
       }
       
     }
 
-    prevLight = currLight;
+    
   }
   
   prevTime = currTime;
