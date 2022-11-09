@@ -135,6 +135,7 @@ void loop() {
   } else if (start == 1){
 
     obstacle = ultrasonic();
+    currLight = analogRead(IR);
     //Serial.println(currLight);
 
     if(obstacle == 1){
@@ -145,19 +146,17 @@ void loop() {
       digitalWrite(Buzz, LOW);
       
       angle = mpu.getAngleZ();
-      currLight = analogRead(IR);
       
       if(timer<0){
         timer++;
       }else{
         // may turn early do to unsigned int, typecast later if needed
-        if(currLight < (prevLight - 55) && turnCount < 2 && wait > 200){
+        if(currLight < (prevLight - 10) && turnCount < 2 && wait > 200){
           desiredAngle = desiredAngle + 90;
           turnCount += 1;
           masterCount += 1;
           wait = 0;
-          Serial.println(wait);
-        } else if(currLight < (prevLight - 55) && turnCount < 4 && wait > 200){
+        } else if(currLight < (prevLight - 10) && turnCount < 4 && wait > 200){ // && prevLight > 400
           desiredAngle = desiredAngle - 90;
           turnCount += 1;
           masterCount += 1;
@@ -172,7 +171,7 @@ void loop() {
         Serial.println(angle);
         drivePID(angle, prevAngle, desiredAngle, dt);
         prevAngle = angle;
-
+        
         prevLight = currLight;
       }
       
@@ -180,7 +179,11 @@ void loop() {
 
     
   }
-  
+  Serial.print("The current IR level is ");
+  Serial.print(currLight);
+  Serial.print("          The previous IR level is ");
+  Serial.println(prevLight);  
+
   prevTime = currTime;
 }
 
@@ -248,7 +251,8 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
     digitalWrite(IN4, HIGH);
 
     // Drive straight P term 
-    kp = 9.9;
+    kp = 10;
+
   }
 
   if(currYaw == 0){
