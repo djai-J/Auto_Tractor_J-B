@@ -147,32 +147,34 @@ void loop() {
       
       angle = mpu.getAngleZ();
       
-      if(timer<0){
-        timer++;
-      }else{
-        // may turn early do to unsigned int, typecast later if needed
-        if(currLight < (prevLight - 10) && turnCount < 2 && wait > 200){
-          desiredAngle = desiredAngle + 90;
-          turnCount += 1;
-          masterCount += 1;
-          wait = 0;
-        } else if(currLight < (prevLight - 10) && turnCount < 4 && wait > 200){ // && prevLight > 400
-          desiredAngle = desiredAngle - 90;
-          turnCount += 1;
-          masterCount += 1;
-          if(turnCount == 4){
-            turnCount = 0;
-          }
-          wait = 0;
-        } else{
-          wait += 1;
+      
+      // may turn early do to unsigned int, typecast later if needed
+      if(currLight < (prevLight - 70) && turnCount < 2 && wait > 40){
+        desiredAngle = desiredAngle + 90;
+        turnCount += 1;
+        masterCount += 1;
+        wait = 0;
+      } else if(currLight < (prevLight - 70) && turnCount < 4 && wait > 40){ // && prevLight > 400
+        desiredAngle = desiredAngle - 90;
+        turnCount += 1;
+        masterCount += 1;
+        if(turnCount == 4){
+          turnCount = 0;
         }
-        timer = 0;
-        Serial.println(angle);
-        drivePID(angle, prevAngle, desiredAngle, dt);
-        prevAngle = angle;
-        
+        wait = 0;
+      } else{
+        Serial.println(wait);
+        wait += 1;
+      }
+      //Serial.println(angle);
+      drivePID(angle, prevAngle, desiredAngle, dt);
+      prevAngle = angle;
+      
+      if(timer < 3){
+        timer++;
+      } else{
         prevLight = currLight;
+        timer = 0;
       }
       
     }
@@ -210,7 +212,7 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
   error = desiredYaw - currYaw;
 
   if((error) > 15 || turning > 0 && error > 9){
-    turning = 100;
+    turning = 1;
 
     // Turn immediately to the left
     digitalWrite(IN1, LOW);
@@ -218,14 +220,10 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
 
-    if(turning > 0){
-      turning += -1;
-    }
-
     // turn left P term 
     kp = 0.4;
   }else if((error) < -15 || turning > 0 && error < -11){
-    turning = 100; 
+    turning = 1; 
 
     // Turn immediately to the right
     digitalWrite(IN1, HIGH);
@@ -251,7 +249,7 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
     digitalWrite(IN4, HIGH);
 
     // Drive straight P term 
-    kp = 10;
+    kp = 50;
 
   }
 
