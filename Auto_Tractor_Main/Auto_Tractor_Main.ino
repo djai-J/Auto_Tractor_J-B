@@ -124,11 +124,19 @@ void loop() {
   mpu.update();
   
   start = run();
+
+
   if(start == 0 || drive == 'S'){
 
     brake();
 
-  } else if (start == 1){
+    start = 0;
+    drive = '0';
+
+  } else if (start == 1 || drive == 'G'){
+
+    start = 1;
+    drive = '0';
 
     obstacle = ultrasonic();
     currLight = analogRead(IR);
