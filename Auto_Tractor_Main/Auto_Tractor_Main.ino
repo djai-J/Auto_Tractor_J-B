@@ -59,7 +59,7 @@ int prevLight = 0;
 
 int wait = 25;
 
-int drive = 0;
+char drive = 0;
 
 // initializations for bluetooth communication
 SoftwareSerial HM10(8,11); //changed to pins 8 and 11
@@ -122,13 +122,9 @@ void loop() {
   dt = currTime - prevTime;
 
   mpu.update();
-
-  if(drive == 1){
-    start = 1; 
-  }
   
   start = run();
-  if(start == 0){
+  if(start == 0 || drive == 'S'){
 
     brake();
 
