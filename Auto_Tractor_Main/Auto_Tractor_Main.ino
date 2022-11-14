@@ -42,8 +42,8 @@ int dt;
 int currTime;
 int prevTime;
 
-int rightSpeed = 180;
-int leftSpeed = 185;
+int rightSpeed = 185;
+int leftSpeed = 177;
 
 float error = 0;
 int integral = 0;
@@ -65,6 +65,22 @@ char drive = 0;
 SoftwareSerial HM10(8,11); //changed to pins 8 and 11
 char appData;  
 String inData = "";
+
+
+// battery charge things
+int currentPin = A2;
+int voltPin = A3;
+
+float current = 0;
+float voltage = 0;
+
+int adc = 0;
+
+float vout = 0.0; //do not change
+float vin = 0.0; //do not change
+float R1 = 30000.0; //onboard resistor 1 value
+float R2 = 7500.0; //onboard resistor 2 value
+int svalue = 0; //do not change
 
 
 void setup() {
@@ -111,6 +127,9 @@ void setup() {
 
   // Bluetooth communication rate
   HM10.begin(9600); 
+
+  pinMode(currentPin, INPUT);
+  pinMode(voltPin, INPUT);
 }
 
 void loop() {
@@ -122,8 +141,20 @@ void loop() {
   dt = currTime - prevTime;
 
   mpu.update();
-  
+
   start = run();
+
+  int adc = analogRead(currentPin);
+  float voltage = adc*5/1023.0;
+  float current = (voltage-2.5)/0.185;
+  Serial.print("Current : ");
+  Serial.println(current);
+
+  svalue = analogRead(voltPin);
+  vout = (svalue * 5.0) / 1024.0;
+  vin = vout / (R2/(R1+R2));
+  Serial.print(vin,2); // prints the voltage
+  Serial.println(" volts DC"); // prints the words "volts DC"
 
 
   if(start == 0 || drive == 'S'){
@@ -151,14 +182,13 @@ void loop() {
       
       angle = mpu.getAngleZ();
       
-      
       // may turn early do to unsigned int, typecast later if needed
-      if(currLight < (prevLight - 70) && turnCount < 2 && wait > 40){
+      if(currLight < (prevLight - 65) && turnCount < 2 && wait > 40){
         desiredAngle = desiredAngle + 90;
         turnCount += 1;
         masterCount += 1;
         wait = 0;
-      } else if(currLight < (prevLight - 70) && turnCount < 4 && wait > 40){ // && prevLight > 400
+      } else if(currLight < (prevLight - 65) && turnCount < 4 && wait > 40){ // && prevLight > 400
         desiredAngle = desiredAngle - 90;
         turnCount += 1;
         masterCount += 1;
@@ -174,7 +204,7 @@ void loop() {
       drivePID(angle, prevAngle, desiredAngle, dt);
       prevAngle = angle;
       
-      if(timer < 3){
+      if(timer < 5){
         timer++;
       } else{
         prevLight = currLight;
@@ -189,6 +219,8 @@ void loop() {
   Serial.print(currLight);
   Serial.print("          The previous IR level is ");
   Serial.println(prevLight);  
+
+  Serial.println(angle);
 
   prevTime = currTime;
 }
@@ -215,7 +247,7 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
 
   error = desiredYaw - currYaw;
 
-  if((error) > 15 || turning > 0 && error > 9){
+  if((error) > 10 || turning > 0 && error > 6){
     turning = 1;
 
     // Turn immediately to the left
@@ -226,7 +258,7 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
 
     // turn left P term 
     kp = 0.4;
-  }else if((error) < -15 || turning > 0 && error < -11){
+  }else if((error) < -10 || turning > 0 && error < -8){
     turning = 1; 
 
     // Turn immediately to the right
@@ -258,25 +290,25 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
   }
 
   if(currYaw == 0){
-    rightSpeed = 180;
-    leftSpeed = 185;
+    rightSpeed = 185;
+    leftSpeed = 177;
   }
 
 
   // calculate the desired speed of the right motor
   rightSpeed = rightSpeed - kp * (error);
-  if(rightSpeed > 250){
-    rightSpeed = 250;
-  }else if (rightSpeed < 110){
-    rightSpeed = 110;
+  if(rightSpeed > 255){
+    rightSpeed = 255;
+  }else if (rightSpeed < 115){
+    rightSpeed = 115;
   }
 
   // calculate the desired speed of the left motor
   leftSpeed = leftSpeed + kp * (error);
-  if(leftSpeed > 255){
-    leftSpeed = 255;
-  }else if (leftSpeed < 115){
-    leftSpeed = 115;
+  if(leftSpeed > 247){
+    leftSpeed = 247;
+  }else if (leftSpeed < 107){
+    leftSpeed = 107;
   }
   /*
   int ki = 1;
@@ -284,7 +316,7 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
   integral += ki * error;
   rightSpeed = rightSpeed - integral;
   leftSpeed = leftSpeed + integral;
-*/
+  */
   // set motor speed
   analogWrite(ENA, rightSpeed);
   analogWrite(ENB, leftSpeed);
