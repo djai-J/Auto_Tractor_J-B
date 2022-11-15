@@ -183,12 +183,12 @@ void loop() {
       angle = mpu.getAngleZ();
       
       // may turn early do to unsigned int, typecast later if needed
-      if(currLight < (prevLight - 200) && turnCount < 2 && wait > 35){
+      if(currLight < (prevLight - 100) && turnCount < 2 && wait > 15){
         desiredAngle = desiredAngle + 91;
         turnCount += 1;
         masterCount += 1;
         wait = 0;
-      } else if(currLight < (prevLight - 200) && turnCount < 4 && wait > 35){ // && prevLight > 400
+      } else if(currLight < (prevLight - 100) && turnCount < 4 && wait > 15){ // && prevLight > 400
         desiredAngle = desiredAngle - 91;
         turnCount += 1;
         masterCount += 1;
