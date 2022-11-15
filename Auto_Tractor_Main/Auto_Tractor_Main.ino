@@ -43,7 +43,7 @@ int currTime;
 int prevTime;
 
 int rightSpeed = 185;
-int leftSpeed = 177;
+int leftSpeed = 178;
 
 float error = 0;
 int integral = 0;
@@ -183,13 +183,13 @@ void loop() {
       angle = mpu.getAngleZ();
       
       // may turn early do to unsigned int, typecast later if needed
-      if(currLight < (prevLight - 65) && turnCount < 2 && wait > 40){
-        desiredAngle = desiredAngle + 90;
+      if(currLight < (prevLight - 200) && turnCount < 2 && wait > 35){
+        desiredAngle = desiredAngle + 91;
         turnCount += 1;
         masterCount += 1;
         wait = 0;
-      } else if(currLight < (prevLight - 65) && turnCount < 4 && wait > 40){ // && prevLight > 400
-        desiredAngle = desiredAngle - 90;
+      } else if(currLight < (prevLight - 200) && turnCount < 4 && wait > 35){ // && prevLight > 400
+        desiredAngle = desiredAngle - 91;
         turnCount += 1;
         masterCount += 1;
         if(turnCount == 4){
@@ -204,7 +204,7 @@ void loop() {
       drivePID(angle, prevAngle, desiredAngle, dt);
       prevAngle = angle;
       
-      if(timer < 5){
+      if(timer < 1){
         timer++;
       } else{
         prevLight = currLight;
@@ -220,6 +220,7 @@ void loop() {
   Serial.print("          The previous IR level is ");
   Serial.println(prevLight);  
 
+  Serial.print("                     The angle is ");
   Serial.println(angle);
 
   prevTime = currTime;
@@ -291,7 +292,7 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
 
   if(currYaw == 0){
     rightSpeed = 185;
-    leftSpeed = 177;
+    leftSpeed = 178;
   }
 
 
@@ -305,10 +306,10 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
 
   // calculate the desired speed of the left motor
   leftSpeed = leftSpeed + kp * (error);
-  if(leftSpeed > 247){
-    leftSpeed = 247;
-  }else if (leftSpeed < 107){
-    leftSpeed = 107;
+  if(leftSpeed > 248){
+    leftSpeed = 248;
+  }else if (leftSpeed < 108){
+    leftSpeed = 108;
   }
   /*
   int ki = 1;
