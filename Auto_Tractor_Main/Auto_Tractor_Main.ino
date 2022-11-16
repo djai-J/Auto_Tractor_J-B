@@ -184,12 +184,12 @@ void loop() {
       
       // may turn early do to unsigned int, typecast later if needed
       if(currLight < (prevLight - 100) && turnCount < 2 && wait > 15){
-        desiredAngle = desiredAngle + 91;
+        desiredAngle = desiredAngle + 90.5;
         turnCount += 1;
         masterCount += 1;
         wait = 0;
       } else if(currLight < (prevLight - 100) && turnCount < 4 && wait > 15){ // && prevLight > 400
-        desiredAngle = desiredAngle - 91;
+        desiredAngle = desiredAngle - 90.5;
         turnCount += 1;
         masterCount += 1;
         if(turnCount == 4){
