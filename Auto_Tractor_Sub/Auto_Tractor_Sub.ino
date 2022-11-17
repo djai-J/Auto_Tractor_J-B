@@ -53,6 +53,7 @@ int calibCount = 0;
 // counts the sequential turns
 int turnCount = 0;
 int masterCount = 0;
+int turnBool = 0;
 
 int currLight = 0;
 int prevLight = 0;
@@ -183,25 +184,27 @@ void loop() {
       angle = mpu.getAngleZ();
       
       // may turn early do to unsigned int, typecast later if needed
-      if(currLight < (prevLight - 100) && turnCount < 2 && wait > 20){
+      if(currLight < (prevLight - 100) && turnCount < 2 && wait > 15){
         desiredAngle = desiredAngle + 90;
         turnCount += 1;
         masterCount += 1;
+        turnBool = 1;
         wait = 0;
-      } else if(currLight < (prevLight - 100) && turnCount < 4 && wait > 20){ // && prevLight > 400
+      } else if(currLight < (prevLight - 100) && turnCount < 4 && wait > 15){ // && prevLight > 400
         desiredAngle = desiredAngle - 90;
         turnCount += 1;
         masterCount += 1;
         if(turnCount == 4){
           turnCount = 0;
         }
+        turnBool = 1;
         wait = 0;
       } else{
         Serial.println(wait);
         wait += 1;
       }
       //Serial.println(angle);
-      drivePID(angle, prevAngle, desiredAngle, dt);
+      turnBool = drivePID(angle, prevAngle, desiredAngle, dt, turnBool);
       prevAngle = angle;
       
       if(timer < 1){
@@ -227,10 +230,9 @@ void loop() {
 }
 
 
-void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
+int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning) {
 
   int kp;
-  static int turning = 0;
 
   // Directions of left motor compared to inputs IN1 and IN2
   // IN1'IN2' = off
@@ -248,7 +250,7 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
 
   error = desiredYaw - currYaw;
 
-  if((error) > 10){
+  if((error) > 5 && turning == 1){
 
     // Turn immediately to the left
     digitalWrite(IN1, LOW);
@@ -274,7 +276,7 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
     }else if (leftSpeed < 108){
       leftSpeed = 108;
     }
-  }else if((error) < -10){
+  }else if((error) < -5 && turning == 1){
 
     // Turn immediately to the right
     digitalWrite(IN1, HIGH);
@@ -300,7 +302,7 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
     }else if (leftSpeed < 108){
       leftSpeed = 108;
     }
-  } else if(abs(error) <= 10){
+  } else if(turning == 0){
 
     // Drive both wheels forward
     digitalWrite(IN1, HIGH);
@@ -327,12 +329,16 @@ void drivePID(float currYaw, float prevYaw, float desiredYaw, int dt) {
       leftSpeed = 108;
     }
 
+  } else if (turning == 1 && abs(error) <= 5){
+    turning = 0;
   }
 
 
   // set motor speed
   analogWrite(ENA, rightSpeed);
   analogWrite(ENB, leftSpeed);
+
+  return turning;
 }
 
 // stops the tractor
