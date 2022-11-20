@@ -250,7 +250,7 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
 
   error = desiredYaw - currYaw;
 
-  if((error) > 5 && turning == 1){
+  if((error) > 2 && turning == 1){
 
     // Turn immediately to the left
     digitalWrite(IN1, LOW);
@@ -276,7 +276,14 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     }else if (leftSpeed < 108){
       leftSpeed = 108;
     }
-  }else if((error) < -5 && turning == 1){
+
+    // set motor speed
+    analogWrite(ENA, rightSpeed*3/4);
+    analogWrite(ENB, leftSpeed*3/4);
+
+    prevYaw = desiredAngle;
+
+  }else if((error) < -2 && turning == 1){
 
     // Turn immediately to the right
     digitalWrite(IN1, HIGH);
@@ -302,6 +309,13 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     }else if (leftSpeed < 108){
       leftSpeed = 108;
     }
+
+    // set motor speed
+    analogWrite(ENA, rightSpeed*3/4);
+    analogWrite(ENB, leftSpeed*3/4);
+
+    prevYaw = desiredAngle;
+
   } else if(turning == 0){
 
     // Drive both wheels forward
@@ -329,14 +343,13 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
       leftSpeed = 108;
     }
 
+    // set motor speed
+    analogWrite(ENA, rightSpeed);
+    analogWrite(ENB, leftSpeed);
+
   } else if (turning == 1 && abs(error) <= 5){
     turning = 0;
   }
-
-
-  // set motor speed
-  analogWrite(ENA, rightSpeed);
-  analogWrite(ENB, leftSpeed);
 
   return turning;
 }
