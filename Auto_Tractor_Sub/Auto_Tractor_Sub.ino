@@ -83,6 +83,8 @@ float R1 = 30000.0; //onboard resistor 1 value
 float R2 = 7500.0; //onboard resistor 2 value
 int svalue = 0; //do not change
 
+float chargeAccum = 0;
+float SOC = 0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -157,6 +159,8 @@ void loop() {
   Serial.print(vin,2); // prints the voltage
   Serial.println(" volts DC"); // prints the words "volts DC"
 
+  chargeAccum += current*(dt/(60*60*1000));
+  SOC = (2000 - chargeAccum) / 2000; 
 
   if(start == 0 && drive == 0){
 
