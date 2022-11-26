@@ -55,8 +55,8 @@ int turnCount = 0;
 int masterCount = 0;
 int turnBool = 0;
 
-int currLight = 0;
-int prevLight = 0;
+int currLight = 1000;
+int prevLight = 1000;
 
 int wait = 25;
 
@@ -160,7 +160,7 @@ void loop() {
   Serial.println(" volts DC"); // prints the words "volts DC"
 
   chargeAccum += current*(dt/(60*60*1000));
-  SOC = (2000 - chargeAccum) / 2000; 
+  SOC = (2 - chargeAccum) / 2; 
 
   if(start == 0 && drive == 0){
 
@@ -188,13 +188,13 @@ void loop() {
       angle = mpu.getAngleZ();
       
       // may turn early do to unsigned int, typecast later if needed
-      if(currLight < (prevLight - 100) && turnCount < 2 && wait > 15){
+      if(currLight > (prevLight + 85) && turnCount < 2 && wait > 3 && currLight > 600){
         desiredAngle = desiredAngle + 90;
         turnCount += 1;
         masterCount += 1;
         turnBool = 1;
         wait = 0;
-      } else if(currLight < (prevLight - 100) && turnCount < 4 && wait > 15){ // && prevLight > 400
+      } else if(currLight > (prevLight + 85) && turnCount < 4 && wait > 3 && currLight > 600){ // && prevLight > 400
         desiredAngle = desiredAngle - 90;
         turnCount += 1;
         masterCount += 1;
@@ -203,7 +203,7 @@ void loop() {
         }
         turnBool = 1;
         wait = 0;
-      } else{
+      } else if (!turnBool && wait < 20){
         Serial.println(wait);
         wait += 1;
       }
@@ -230,11 +230,15 @@ void loop() {
   Serial.print("                     The angle is ");
   Serial.println(angle);
 
+  Serial.print("                     The previous angle is ");
+  Serial.println(prevAngle);
+
   prevTime = currTime;
 }
 
 
 int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning) {
+  static int stop = 0;
 
   int kp;
 
@@ -254,7 +258,7 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
 
   error = desiredYaw - currYaw;
 
-  if((error) > 2 && turning == 1){
+  if((error) > 1 && turning == 1){
 
     // Turn immediately to the left
     digitalWrite(IN1, LOW);
@@ -282,12 +286,14 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     }
 
     // set motor speed
-    analogWrite(ENA, rightSpeed*3/4);
-    analogWrite(ENB, leftSpeed*3/4);
+    analogWrite(ENA, rightSpeed*15/16);
+    analogWrite(ENB, leftSpeed*15/16);
 
     prevYaw = desiredAngle;
+    
+    stop = 0;
 
-  }else if((error) < -2 && turning == 1){
+  }else if((error) < -1 && turning == 1){
 
     // Turn immediately to the right
     digitalWrite(IN1, HIGH);
@@ -315,10 +321,12 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     }
 
     // set motor speed
-    analogWrite(ENA, rightSpeed*3/4);
-    analogWrite(ENB, leftSpeed*3/4);
+    analogWrite(ENA, rightSpeed*15/16);
+    analogWrite(ENB, leftSpeed*15/16);
 
     prevYaw = desiredAngle;
+    
+    stop = 0;
 
   } else if(turning == 0){
 
@@ -351,8 +359,16 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     analogWrite(ENA, rightSpeed);
     analogWrite(ENB, leftSpeed);
 
-  } else if (turning == 1 && abs(error) <= 5){
-    turning = 0;
+  } else if (turning == 1 && abs(error) <= 2){
+    brake();
+
+    if(stop<3){
+      stop++;
+    } else{
+      turning = 0;
+    }
+
+    Serial.println(stop);
   }
 
   return turning;
