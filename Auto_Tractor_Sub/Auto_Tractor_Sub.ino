@@ -137,6 +137,9 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+
+  static float gyro = 0;
+  static float accel = 0;
   
   drive = bluetooth();
 
@@ -186,16 +189,18 @@ void loop() {
       digitalWrite(Buzz, LOW);
       
       angle = mpu.getAngleZ();
+      gyro = mpu.getGyroZ();
+      accel = mpu.getAccZ();
       
       // may turn early do to unsigned int, typecast later if needed
-      if(currLight > (prevLight + 85) && turnCount < 2 && wait > 3 && currLight > 600){
-        desiredAngle = desiredAngle + 90;
+      if(currLight > (prevLight + 65) && turnCount < 2 && wait > 3 && currLight > 600){
+        desiredAngle = desiredAngle + 91;
         turnCount += 1;
         masterCount += 1;
         turnBool = 1;
         wait = 0;
-      } else if(currLight > (prevLight + 85) && turnCount < 4 && wait > 3 && currLight > 600){ // && prevLight > 400
-        desiredAngle = desiredAngle - 90;
+      } else if(currLight > (prevLight + 65) && turnCount < 4 && wait > 3 && currLight > 600){ // && prevLight > 400
+        desiredAngle = desiredAngle - 91;
         turnCount += 1;
         masterCount += 1;
         if(turnCount == 4){
@@ -359,7 +364,7 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     analogWrite(ENA, rightSpeed);
     analogWrite(ENB, leftSpeed);
 
-  } else if (turning == 1 && abs(error) <= 2){
+  } else if (turning == 1 && abs(error) <= 1){
     brake();
 
     if(stop<3){
