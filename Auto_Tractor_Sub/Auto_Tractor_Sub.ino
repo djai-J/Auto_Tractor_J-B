@@ -86,6 +86,9 @@ int svalue = 0; //do not change
 float chargeAccum = 0;
 float SOC = 0;
 
+float kalmanAngle = 0;
+float Kn = 0.9;
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
@@ -189,18 +192,17 @@ void loop() {
       digitalWrite(Buzz, LOW);
       
       angle = mpu.getAngleZ();
-      gyro = mpu.getGyroZ();
-      accel = mpu.getAccZ();
+      kalmanAngle = kalmanAngle + Kn * (angle - kalmanAngle);
       
       // may turn early do to unsigned int, typecast later if needed
-      if(currLight > (prevLight + 65) && turnCount < 2 && wait > 3 && currLight > 600){
-        desiredAngle = desiredAngle + 91;
+      if(currLight > (prevLight + 60) && turnCount < 2 && wait > 3 && currLight > 600){
+        desiredAngle = desiredAngle + 90;
         turnCount += 1;
         masterCount += 1;
         turnBool = 1;
         wait = 0;
-      } else if(currLight > (prevLight + 65) && turnCount < 4 && wait > 3 && currLight > 600){ // && prevLight > 400
-        desiredAngle = desiredAngle - 91;
+      } else if(currLight > (prevLight + 60) && turnCount < 4 && wait > 3 && currLight > 600){ // && prevLight > 400
+        desiredAngle = desiredAngle - 90;
         turnCount += 1;
         masterCount += 1;
         if(turnCount == 4){
@@ -213,10 +215,10 @@ void loop() {
         wait += 1;
       }
       //Serial.println(angle);
-      turnBool = drivePID(angle, prevAngle, desiredAngle, dt, turnBool);
-      prevAngle = angle;
+      turnBool = drivePID(kalmanAngle, prevAngle, desiredAngle, dt, turnBool);
+      prevAngle = kalmanAngle;
       
-      if(timer < 1){
+      if(timer < 0){
         timer++;
       } else{
         prevLight = currLight;
@@ -224,19 +226,20 @@ void loop() {
       }
       
     }
+      Serial.print("The current IR level is ");
+      Serial.print(currLight);
+      Serial.print("          The previous IR level is ");
+      Serial.println(prevLight);  
 
-    
+      Serial.print("                     The angle is ");
+      Serial.println(angle);
+
+      Serial.print("                     The previous angle is ");
+      Serial.println(prevAngle);
   }
-  Serial.print("The current IR level is ");
-  Serial.print(currLight);
-  Serial.print("          The previous IR level is ");
-  Serial.println(prevLight);  
 
-  Serial.print("                     The angle is ");
-  Serial.println(angle);
-
-  Serial.print("                     The previous angle is ");
-  Serial.println(prevAngle);
+  Serial.print("dt = ");
+  Serial.println(dt);
 
   prevTime = currTime;
 }
@@ -263,7 +266,7 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
 
   error = desiredYaw - currYaw;
 
-  if((error) > 1 && turning == 1){
+  if((error) > 2 && turning == 1){
 
     // Turn immediately to the left
     digitalWrite(IN1, LOW);
@@ -291,14 +294,14 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     }
 
     // set motor speed
-    analogWrite(ENA, rightSpeed*15/16);
-    analogWrite(ENB, leftSpeed*15/16);
+    analogWrite(ENA, 150);
+    analogWrite(ENB, 150);
 
     prevYaw = desiredAngle;
     
     stop = 0;
 
-  }else if((error) < -1 && turning == 1){
+  }else if((error) < -2 && turning == 1){
 
     // Turn immediately to the right
     digitalWrite(IN1, HIGH);
@@ -326,8 +329,8 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     }
 
     // set motor speed
-    analogWrite(ENA, rightSpeed*15/16);
-    analogWrite(ENB, leftSpeed*15/16);
+    analogWrite(ENA, 150);
+    analogWrite(ENB, 150);
 
     prevYaw = desiredAngle;
     
