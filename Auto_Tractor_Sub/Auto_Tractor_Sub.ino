@@ -87,7 +87,7 @@ float chargeAccum = 0;
 float SOC = 0;
 
 float kalmanAngle = 0;
-float Kn = 0.9;
+float Kn = 1;
 
 void setup() {
   // put your setup code here, to run once:
@@ -195,13 +195,13 @@ void loop() {
       kalmanAngle = kalmanAngle + Kn * (angle - kalmanAngle);
       
       // may turn early do to unsigned int, typecast later if needed
-      if(currLight > (prevLight + 60) && turnCount < 2 && wait > 3 && currLight > 600){
+      if(currLight > (prevLight + 60) && turnCount < 2 && wait > 2 && currLight > 600){
         desiredAngle = desiredAngle + 90;
         turnCount += 1;
         masterCount += 1;
         turnBool = 1;
         wait = 0;
-      } else if(currLight > (prevLight + 60) && turnCount < 4 && wait > 3 && currLight > 600){ // && prevLight > 400
+      } else if(currLight > (prevLight + 60) && turnCount < 4 && wait > 2 && currLight > 600){ // && prevLight > 400
         desiredAngle = desiredAngle - 90;
         turnCount += 1;
         masterCount += 1;
@@ -210,7 +210,7 @@ void loop() {
         }
         turnBool = 1;
         wait = 0;
-      } else if (!turnBool && wait < 20){
+      } else if (!turnBool && wait < 4){
         Serial.println(wait);
         wait += 1;
       }
@@ -294,8 +294,8 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     }
 
     // set motor speed
-    analogWrite(ENA, 150);
-    analogWrite(ENB, 150);
+    analogWrite(ENA, 180);
+    analogWrite(ENB, 120);
 
     prevYaw = desiredAngle;
     
@@ -329,7 +329,7 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     }
 
     // set motor speed
-    analogWrite(ENA, 150);
+    analogWrite(ENA, 120);
     analogWrite(ENB, 150);
 
     prevYaw = desiredAngle;
@@ -367,16 +367,21 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     analogWrite(ENA, rightSpeed);
     analogWrite(ENB, leftSpeed);
 
-  } else if (turning == 1 && abs(error) <= 1){
+  } else if (turning == 1 && abs(error) <= 2){
     brake();
 
     if(stop<3){
       stop++;
     } else{
-      turning = 0;
+      turning = 2;
     }
 
     Serial.println(stop);
+  } else if (turning == 2){
+      delay(1000);
+      mpu.calcOffsets(true,true);
+
+      turning = 0;
   }
 
   return turning;
