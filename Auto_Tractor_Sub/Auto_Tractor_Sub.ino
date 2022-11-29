@@ -140,34 +140,39 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-
-  static float gyro = 0;
-  static float accel = 0;
   
+  // receives input from the GUI
   drive = bluetooth();
 
+  // calculates the total run time and time between loops
   currTime = millis();
   dt = currTime - prevTime;
 
+  // updates the gyroscope angles
   mpu.update();
 
+  // receives input from the button on the tractor
   start = run();
 
+  // calculates the measured instantaneous current
   int adc = analogRead(currentPin);
   float voltage = adc*5/1023.0;
   float current = (voltage-2.5)/0.185;
-  Serial.print("Current : ");
-  Serial.println(current);
+  Serial.print("Current : "); // prints the current header
+  Serial.println(current); // prints the current
 
+  // calculates the measured instantaneous voltage
   svalue = analogRead(voltPin);
   vout = (svalue * 5.0) / 1024.0;
   vin = vout / (R2/(R1+R2));
   Serial.print(vin,2); // prints the voltage
   Serial.println(" volts DC"); // prints the words "volts DC"
 
+  // calculates the state of charge of the batteries
   chargeAccum += current*(dt/(60*60*1000));
   SOC = (2 - chargeAccum) / 2; 
 
+  // keeps the tractor in a stopped state until the proper command is received from the button or GUI
   if(start == 0 && drive == 0){
 
     brake();
@@ -180,28 +185,37 @@ void loop() {
     start = 1;
     drive = '0';
 
+    // detects obstacles in front of the tractor
     obstacle = ultrasonic();
+
+    // detects tape below the tractor
     currLight = analogRead(IR);
     //Serial.println(currLight);
 
+    // performs an emergency stop if there is an obstacle
     if(obstacle == 1){
       brake();
+
+      // generates a sound to alert the operator via the buzzer
       digitalWrite(Buzz, HIGH);
       digitalWrite(Buzz, LOW);
     }else{
       digitalWrite(Buzz, LOW);
       
+      // updates the yaw angle of the tractor
       angle = mpu.getAngleZ();
+
+      // basic Kalman filter to help reduce impact of gyro drift
       kalmanAngle = kalmanAngle + Kn * (angle - kalmanAngle);
       
-      // may turn early do to unsigned int, typecast later if needed
-      if(currLight > (prevLight + 60) && turnCount < 2 && wait > 2 && currLight > 600){
+      // checks if marker has been encountered and how the tractor should turn if so
+      if(currLight > (prevLight + 60) && turnCount < 2 && wait > 2 && currLight > 600){ // Left turn
         desiredAngle = desiredAngle + 90;
         turnCount += 1;
         masterCount += 1;
         turnBool = 1;
         wait = 0;
-      } else if(currLight > (prevLight + 60) && turnCount < 4 && wait > 2 && currLight > 600){ // && prevLight > 400
+      } else if(currLight > (prevLight + 60) && turnCount < 4 && wait > 2 && currLight > 600){ // Right turn
         desiredAngle = desiredAngle - 90;
         turnCount += 1;
         masterCount += 1;
@@ -210,14 +224,19 @@ void loop() {
         }
         turnBool = 1;
         wait = 0;
-      } else if (!turnBool && wait < 4){
+      } else if (!turnBool && wait < 4){ // wait to pass over the tape
         Serial.println(wait);
         wait += 1;
       }
       //Serial.println(angle);
+
+      // causes the tractor to drive straight or turn
       turnBool = drivePID(kalmanAngle, prevAngle, desiredAngle, dt, turnBool);
+
+      // stores the previous yaw of the tractor
       prevAngle = kalmanAngle;
       
+      // a dampener for the number of times to store the previous IR level, helpful if the loop becomes too taxing
       if(timer < 0){
         timer++;
       } else{
@@ -226,6 +245,8 @@ void loop() {
       }
       
     }
+
+      // several print statements to help debugging
       Serial.print("The current IR level is ");
       Serial.print(currLight);
       Serial.print("          The previous IR level is ");
@@ -241,6 +262,7 @@ void loop() {
   Serial.print("dt = ");
   Serial.println(dt);
 
+  // stores the previous time
   prevTime = currTime;
 }
 
@@ -264,34 +286,16 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
 
   // positive yaw is counterclockwise
 
+  // calculates the error of the current heading
   error = desiredYaw - currYaw;
 
-  if((error) > 2 && turning == 1){
+  if((error) > 2 && turning == 1){ // executes the left turn when it has hit the correct checkpoints
 
     // Turn immediately to the left
     digitalWrite(IN1, LOW);
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, LOW);
     digitalWrite(IN4, HIGH);
-
-    // turn left P term 
-    kp = 0.4;
-
-    // calculate the desired speed of the right motor
-    rightSpeed = rightSpeed - kp * (error);
-    if(rightSpeed > 255){
-      rightSpeed = 255;
-    }else if (rightSpeed < 115){
-      rightSpeed = 115;
-    }
-
-    // calculate the desired speed of the left motor
-    leftSpeed = leftSpeed + kp * (error);
-    if(leftSpeed > 248){
-      leftSpeed = 248;
-    }else if (leftSpeed < 108){
-      leftSpeed = 108;
-    }
 
     // set motor speed
     analogWrite(ENA, 180);
@@ -301,32 +305,13 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     
     stop = 0;
 
-  }else if((error) < -2 && turning == 1){
+  }else if((error) < -2 && turning == 1){ // executes the left turn when it has hit the correct checkpoints
 
     // Turn immediately to the right
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, LOW);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, LOW);
-
-    // turn right P term 
-    kp = 0.4;
-
-    // calculate the desired speed of the right motor
-    rightSpeed = rightSpeed - kp * (error);
-    if(rightSpeed > 255){
-      rightSpeed = 255;
-    }else if (rightSpeed < 115){
-      rightSpeed = 115;
-    }
-
-    // calculate the desired speed of the left motor
-    leftSpeed = leftSpeed + kp * (error);
-    if(leftSpeed > 248){
-      leftSpeed = 248;
-    }else if (leftSpeed < 108){
-      leftSpeed = 108;
-    }
 
     // set motor speed
     analogWrite(ENA, 120);
@@ -336,7 +321,7 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     
     stop = 0;
 
-  } else if(turning == 0){
+  } else if(turning == 0){ // drives straight if it is not turning
 
     // Drive both wheels forward
     digitalWrite(IN1, HIGH);
@@ -367,7 +352,7 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     analogWrite(ENA, rightSpeed);
     analogWrite(ENB, leftSpeed);
 
-  } else if (turning == 1 && abs(error) <= 2){
+  } else if (turning == 1 && abs(error) <= 2){ // ensures the tractor is still within the correct bounds of the desired angle
     brake();
 
     if(stop<3){
@@ -377,7 +362,7 @@ int drivePID(float currYaw, float prevYaw, float desiredYaw, int dt, int turning
     }
 
     Serial.println(stop);
-  } else if (turning == 2){
+  } else if (turning == 2){ // recalculates gyro offsets to reduce gyro drift
       delay(1000);
       mpu.calcOffsets(true,true);
 
@@ -434,14 +419,8 @@ int ultrasonic(){
   static int i = 0;
 
   i++;
-/*
-  if(i>500){
-    Serial.print("The distance in centimeters is ");
-    Serial.print(distance);
-    Serial.print("\n");
-    i = 0;
-  }
-  */
+
+  // returns that an obstacle is detected if the distance is less than 10 cm
   if(distance < 10){
     obstacle = 1;
   }else{
@@ -451,6 +430,7 @@ int ultrasonic(){
   return obstacle;
 }
 
+// receives input and tries to send output to the bluetooth module
 int bluetooth(){
 
   static int drive = 0;
@@ -468,14 +448,14 @@ int bluetooth(){
     //Serial.write(appData);
     //Serial.println(inData);
   }
-  if( inData == "S") 
+  if( inData == "S") // stops the tractor
   {
   Serial.println("Tractor stopped..*******************************************************************************************************************");
   HM10.write("Tractor stopped");
   //insert tractor instructions for switching off
   drive = 0;
   }
-  if ( inData == "G") 
+  if ( inData == "G") // starts the tractor
   {
     Serial.println("Tractor Moving..*******************************************************************************************************************");
     HM10.write("Tractor moving");
